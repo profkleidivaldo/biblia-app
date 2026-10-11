@@ -12,37 +12,92 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Bíblia Sagrada — Leitura</title>
+<script>
+/* Aplica o tema salvo antes de desenhar a página (evita piscar claro/escuro). */
+(function(){
+  var t=null;
+  try{t=JSON.parse(localStorage.getItem("biblia_tema_v1"));}catch(e){}
+  if(t!=="dark"&&t!=="light"){
+    try{t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}catch(e){t="light";}
+  }
+  document.documentElement.setAttribute("data-theme",t);
+})();
+</script>
 <style>
 :root{
+  color-scheme:light;
   --bg:#f5f6f7;--surface:#fff;--ink:#1d2730;--muted:#707b84;
-  --line:#e2e6e9;--accent:#079fd0;--accent-soft:#e9f8fd;
+  --line:#e2e6e9;--accent:#079fd0;--accent-soft:#e9f8fd;--accent-line:#8fd6ea;
+  --soft:#eef2f4;--soft-ink:#34414b;--chip-on:#252525;
+  --hl:#fff0a8;--hl-ink:inherit;
+  --ok:#2e9e5b;--ok-soft:#e3f5ea;--ok-text:#3f7d12;
+  --err-bg:#fff1ef;--err-line:#f1c9c2;--err-ink:#8e3c32;
+  --grid:#273038;
   --shadow:0 5px 18px rgba(20,30,40,.07);--radius:16px;
+  --verse-size:18px;
+  --font-bible:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","Times New Roman",serif;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#12161a;--surface:#1b2126;--ink:#e7ebee;--muted:#9aa6ae;
+  --line:#2d363d;--accent:#079fd0;--accent-soft:#12303a;--accent-line:#1c6d86;
+  --soft:#262e34;--soft-ink:#d6dde2;--chip-on:#3b464e;
+  --hl:#7d6a14;--hl-ink:#fff8dc;
+  --ok:#2f9e5f;--ok-soft:#173a27;--ok-text:#8fd16a;
+  --err-bg:#3a1f1c;--err-line:#6b3a33;--err-ink:#f1b8ae;
+  --grid:#0c0f11;
+  --shadow:0 5px 18px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.5}
 button,input{font:inherit}
-button{border:0}
+button{border:0;color:inherit}
 .app-header{position:sticky;top:0;z-index:50;background:#252525;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18)}
-.header-inner{max-width:1080px;margin:auto;min-height:56px;padding:7px 12px;display:flex;align-items:center;gap:10px}
-.brand{font-size:17px;font-weight:700;flex:1}
-.header-btn{width:42px;height:42px;border-radius:10px;background:transparent;color:#fff;cursor:pointer;font-size:20px}
+.header-inner{max-width:1080px;margin:auto;min-height:56px;padding:7px 12px;display:flex;align-items:center;gap:8px}
+.brand{font-size:17px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-btn{width:42px;height:42px;border-radius:10px;background:transparent;color:#fff;cursor:pointer;font-size:20px;display:inline-flex;align-items:center;justify-content:center}
 .header-btn:hover{background:rgba(255,255,255,.1)}
+.theme-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.theme-btn .i-sun{display:none}
+:root[data-theme="dark"] .theme-btn .i-sun{display:block}
+:root[data-theme="dark"] .theme-btn .i-moon{display:none}
 .container{max-width:1280px;margin:auto;padding:10px 10px 30px}
 .view{display:none}.view.active{display:block}
 .topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.back{width:42px;height:42px;border-radius:12px;background:#fff;border:1px solid var(--line);cursor:pointer;color:#35424c;font-size:22px}
+.back{width:42px;height:42px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;color:var(--soft-ink);font-size:22px}
 .title{margin:0;font-size:24px;line-height:1.2}
 .subtitle{margin:4px 0 0;color:var(--muted);font-size:13px}
+
+/* progresso geral */
+.progress-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 16px;box-shadow:var(--shadow)}
+.progress-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px}
+.progress-top strong{font-size:14px}
+.progress-pct{font-weight:800;color:var(--ok-text);font-size:15px}
+.progress-bar{height:10px;border-radius:999px;background:var(--soft);overflow:hidden;margin:8px 0 6px}
+.progress-fill{height:100%;width:0;border-radius:999px;background:var(--ok);transition:width .35s ease}
+.progress-sub{font-size:12px;color:var(--muted)}
+
 .search-wrap{position:relative;margin:4px 0 18px}
-.search-wrap input{width:100%;height:50px;padding:0 46px 0 16px;border:1px solid var(--line);border-radius:15px;background:#fff;color:var(--ink);outline:none;box-shadow:var(--shadow)}
-.search-wrap input:focus{border-color:#8fd6ea;box-shadow:0 0 0 3px var(--accent-soft)}
-.search-icon{position:absolute;right:12px;top:4px;width:42px;height:42px;background:transparent;color:#6e7982;font-size:20px;pointer-events:none}
-.search-info{font-size:12px;color:var(--muted);margin:-8px 0 10px}.search-mode{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 10px}.search-mode button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700;color:#52606a;cursor:pointer}.search-mode button.active{background:#252525;color:#fff;border-color:#252525}.global-status{font-size:12px;color:var(--muted);margin:6px 0 10px}.result-actions{display:flex;gap:6px;margin-top:8px}.result-actions button{border:1px solid var(--line);background:#f5f7f8;border-radius:8px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer}.result-actions button:hover{background:#eaf7fb}
-.book-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;background:#273038;border:1px solid #273038;border-radius:6px;overflow:hidden;box-shadow:var(--shadow)}
-.book{min-height:92px;padding:11px 11px 9px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;cursor:pointer}
+.search-wrap input{width:100%;height:50px;padding:0 46px 0 16px;border:1px solid var(--line);border-radius:15px;background:var(--surface);color:var(--ink);outline:none;box-shadow:var(--shadow)}
+.search-wrap input::placeholder{color:var(--muted)}
+.search-wrap input:focus{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+.search-icon{position:absolute;right:12px;top:4px;width:42px;height:42px;background:transparent;color:var(--muted);font-size:20px;pointer-events:none}
+.search-info{font-size:12px;color:var(--muted);margin:-8px 0 10px}
+.search-mode{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 10px}
+.search-mode button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700;color:var(--soft-ink);cursor:pointer}
+.search-mode button.active{background:var(--chip-on);color:#fff;border-color:var(--chip-on)}
+.global-status{font-size:12px;color:var(--muted);margin:6px 0 10px}
+.result-actions{display:flex;gap:6px;margin-top:8px}
+.result-actions button{border:1px solid var(--line);background:var(--soft);color:var(--soft-ink);border-radius:8px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer}
+.result-actions button:hover{background:var(--accent-soft)}
+.book-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;background:var(--grid);border:1px solid var(--grid);border-radius:6px;overflow:hidden;box-shadow:var(--shadow)}
+.book{position:relative;min-height:92px;padding:11px 11px 12px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;cursor:pointer}
 .book .abbr{font-size:29px;font-weight:700;line-height:1}
+.book.done .abbr::after{content:" ✓";font-size:.5em;vertical-align:middle}
 .book .name{font-size:11px;font-weight:700;align-self:flex-end}
+.book-bar{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(0,0,0,.25)}
+.book-bar i{display:block;height:100%;background:rgba(255,255,255,.92)}
 .book:hover{filter:brightness(1.05)}
 .book[data-section="pentateuco"]{background:#099ed0}
 .book[data-section="historicos"]{background:#83b600}
@@ -52,38 +107,58 @@ button{border:0}
 .book[data-section="atos"]{background:#168c8c}
 .book[data-section="epistolas"]{background:#4769ae}
 .book[data-section="profecia"]{background:#a94d83}
-.empty{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;color:var(--muted);font-size:14px}
+.empty{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;color:var(--muted);font-size:14px}
 .search-results{margin-top:16px}
-.result{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0;cursor:pointer}
-.result strong{display:block;color:#1e2b34;margin-bottom:3px}
-.result span{font-size:13px;color:#69747d}
-.result mark{background:#fff0a8;padding:0 2px;border-radius:2px}
+.result{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0;cursor:pointer}
+.result strong{display:block;color:var(--ink);margin-bottom:3px}
+.result span{font-size:13px;color:var(--muted)}
+.result mark{background:var(--hl);color:var(--hl-ink);padding:0 2px;border-radius:2px}
 .chapter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:9px}
-.chapter{min-height:52px;border-radius:12px;background:#fff;border:1px solid var(--line);cursor:pointer;font-weight:800;color:#34424c}
-.chapter:hover{border-color:#9bd8e9;background:#effaff;color:#087da5}
+.chapter{min-height:52px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;font-weight:800;color:var(--soft-ink)}
+.chapter:hover{border-color:var(--accent-line);background:var(--accent-soft);color:var(--accent)}
+.chapter.read{background:var(--ok);border-color:var(--ok);color:#fff}
+.chapter.read:hover{filter:brightness(1.08);background:var(--ok);border-color:var(--ok);color:#fff}
 .reader{max-width:760px;margin:auto}
 .reader-head{margin-bottom:9px}
-.reader-title{font-size:25px;margin:0;line-height:1.25}
+.reader-title{font-size:25px;margin:0;line-height:1.25;font-family:var(--font-bible)}
 .reader-meta{font-size:12px;color:var(--muted);margin-top:4px}
-.reader-actions{display:flex;gap:6px;margin-top:10px}
-.action{min-height:38px;padding:7px 11px;border-radius:10px;background:#eef2f4;color:#34414b;cursor:pointer;font-weight:700;font-size:13px}
+.reader-actions,.chapter-nav{display:flex;align-items:stretch;gap:6px}
+.reader-actions{margin-top:10px}
+.chapter-nav{padding-top:12px}
+.reader-actions .action,.chapter-nav .action{flex:1}
+.action{min-height:38px;padding:7px 11px;border-radius:10px;background:var(--soft);color:var(--soft-ink);cursor:pointer;font-weight:700;font-size:13px}
 .action.primary{background:var(--accent);color:#fff}
 .action:disabled{opacity:.4;cursor:not-allowed}
-.offline-badge{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:#60707b}
-.offline-badge.saved{color:#4c7610}
-.verses{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.verse{position:relative;padding:13px 2px 14px;font-size:18px;line-height:1.82;border-bottom:1px solid #edf0f2}
-.verse:last-child{border-bottom:0}
-.verse b{display:inline-block;min-width:26px;padding:2px 6px 2px 0;color:#8a959d;font-size:11px;vertical-align:top;font-weight:800;cursor:pointer}
-.verse mark,.highlight{background:#fff0a8;border-radius:3px;padding:0 1px}
+
+/* caixa "Lido" entre Anterior e Próximo */
+.read-toggle{position:relative;flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:7px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);color:var(--soft-ink);font-weight:700;font-size:13px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.read-toggle input{position:absolute;opacity:0;width:100%;height:100%;left:0;top:0;margin:0;cursor:pointer}
+.read-toggle .box{width:20px;height:20px;border-radius:6px;border:2px solid var(--muted);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;transition:background .15s,border-color .15s}
+.read-toggle .box svg{width:14px;height:14px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.read-toggle input:checked ~ .box{background:var(--ok);border-color:var(--ok)}
+.read-toggle input:checked ~ .box svg{opacity:1}
+.read-toggle:has(input:checked){background:var(--ok-soft);border-color:var(--ok);color:var(--ok-text)}
+.read-toggle input:focus-visible ~ .box{outline:3px solid var(--accent-line);outline-offset:2px}
+
+/* tamanho do texto */
+.reader-tools{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:8px;font-size:12px;color:var(--muted)}
+.reader-tools .tool-label{margin-right:2px}
+.size-btn{width:38px;height:34px;border-radius:9px;background:var(--soft);color:var(--soft-ink);cursor:pointer;font-weight:800;font-size:18px;line-height:1}
+.size-btn:disabled{opacity:.35;cursor:not-allowed}
+.size-label{min-width:28px;text-align:center;font-weight:700;color:var(--soft-ink)}
+
+.offline-badge{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:var(--muted)}
+.offline-badge.saved{color:var(--ok-text)}
+.verses{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.verse{position:relative;padding:7px 2px;font-family:var(--font-bible);font-size:var(--verse-size);line-height:1.8}
+.verse b{display:inline-block;padding:.15em .5em .15em 0;color:var(--muted);font-family:Arial,Helvetica,sans-serif;font-size:.6em;vertical-align:top;font-weight:800;cursor:pointer}
+.verse mark,.highlight{background:var(--hl);color:var(--hl-ink);border-radius:3px;padding:0 1px}
 .verse mark{cursor:pointer}
 .loading{text-align:center;padding:42px 10px;color:var(--muted)}
-.error{padding:16px;background:#fff1ef;border:1px solid #f1c9c2;color:#8e3c32;border-radius:13px;margin:12px 0}
-.chapter-nav{display:flex;justify-content:space-between;gap:8px;padding-top:12px}
-.chapter-nav .action{flex:1}
+.error{padding:16px;background:var(--err-bg);border:1px solid var(--err-line);color:var(--err-ink);border-radius:13px;margin:12px 0}
 .note{font-size:11px;color:var(--muted);margin-top:12px}
 .selection-tool{position:fixed;left:0;right:0;bottom:0;z-index:120;display:none;justify-content:center;align-items:center;gap:8px;
-  background:#222;color:#fff;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 20px rgba(0,0,0,.25)}
+  background:#222;color:#fff;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 20px rgba(0,0,0,.25);border-top:1px solid #3a444b}
 .selection-tool.show{display:flex}
 .selection-tool .sel-preview{flex:1;min-width:0;font-size:12px;color:#c7ccd1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:40%}
 .selection-tool button{background:rgba(255,255,255,.12);color:#fff;padding:10px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap}
@@ -91,36 +166,37 @@ button{border:0}
 .selection-tool #selToggleBtn{background:var(--accent)}
 .reader-menu{position:fixed;inset:0;background:rgba(10,18,25,.48);z-index:110;display:none}
 .reader-menu.show{display:block}
-.menu-panel{position:absolute;right:0;top:0;height:100%;width:min(330px,88%);background:#fff;padding:18px;box-shadow:-8px 0 30px rgba(0,0,0,.15)}
+.menu-panel{position:absolute;right:0;top:0;height:100%;width:min(330px,88%);background:var(--surface);color:var(--ink);padding:18px;box-shadow:-8px 0 30px rgba(0,0,0,.15);overflow:auto}
 .menu-panel h3{margin:0 0 15px}
-.menu-panel button{display:block;width:100%;text-align:left;padding:12px;border-radius:10px;background:#f2f4f5;margin:7px 0;cursor:pointer}
+.menu-panel button{display:block;width:100%;text-align:left;padding:12px;border-radius:10px;background:var(--soft);color:var(--ink);margin:7px 0;cursor:pointer}
 .cache-list{font-size:12px;color:var(--muted);margin-top:18px}
 .version-btn{height:36px;padding:0 13px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
 .version-btn:hover{background:rgba(255,255,255,.24)}
 .menu-panel .version-opt{border:2px solid transparent}
-.menu-panel .version-opt.active{background:var(--accent-soft);border-color:#8fd6ea}
+.menu-panel .version-opt.active{background:var(--accent-soft);border-color:var(--accent-line)}
 .version-opt strong{font-size:15px}
 .version-opt small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 .compare-sheet{position:fixed;inset:0;background:rgba(10,18,25,.48);z-index:130;display:none;align-items:flex-end;justify-content:center}
 .compare-sheet.show{display:flex}
-.compare-panel{background:#fff;width:min(720px,100%);max-height:82vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.compare-panel{background:var(--surface);color:var(--ink);width:min(720px,100%);max-height:82vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px))}
 .compare-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .compare-head h3{margin:0;font-size:18px}
-.compare-close{width:38px;height:38px;border-radius:10px;background:#f2f4f5;cursor:pointer;font-size:20px}
+.compare-close{width:38px;height:38px;border-radius:10px;background:var(--soft);color:var(--ink);cursor:pointer;font-size:20px}
 .cmp-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
-.cmp-item.current{border-color:#8fd6ea;background:var(--accent-soft)}
+.cmp-item.current{border-color:var(--accent-line);background:var(--accent-soft)}
 .cmp-top{display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--muted)}
 .cmp-top strong{color:var(--ink);font-size:13px}
-.cmp-item p{margin:6px 0 0;font-size:16px;line-height:1.7}
+.cmp-item p{margin:6px 0 0;font-family:var(--font-bible);font-size:16px;line-height:1.7}
 .cmp-item .cmp-load{margin-top:8px;padding:8px 12px;border-radius:9px;background:var(--accent);color:#fff;font-weight:700;font-size:13px;cursor:pointer}
 @media(min-width:650px){.book-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.book{min-height:96px}.book .abbr{font-size:31px}}
 @media(min-width:950px){.book-grid{grid-template-columns:repeat(9,minmax(0,1fr))}.book{min-height:88px}}
 @media(max-width:480px){
+  :root{--verse-size:17px}
   .container{padding:12px 9px 35px}
   .title{font-size:21px}
   .reader-title{font-size:23px}
-  .verse{font-size:17px}
-  .reader-actions .action{font-size:12px;padding:7px 8px}
+  .reader-actions .action,.chapter-nav .action{font-size:12px;padding:7px 8px}
+  .read-toggle{padding:7px 9px;font-size:12px;gap:6px}
 }
 </style>
 </head>
@@ -138,6 +214,10 @@ button{border:0}
     <button class="header-btn" id="homeBtn" aria-label="Livros">☰</button>
     <div class="brand">Bíblia Sagrada</div>
     <button class="version-btn" id="versionBtn" type="button" aria-label="Escolher versão da Bíblia">ACF ▾</button>
+    <button class="header-btn theme-btn" id="themeBtn" type="button" aria-label="Mudar para o modo escuro" title="Alternar modo claro/escuro">
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.3M12 19.2v2.3M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.3M19.2 12h2.3M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
+    </button>
     <button class="header-btn" id="menuBtn" aria-label="Opções de leitura">⋮</button>
   </div>
 </header>
@@ -154,8 +234,17 @@ button{border:0}
       </div>
     </div>
 
+    <div class="progress-card" id="progressCard" aria-live="polite">
+      <div class="progress-top">
+        <span><strong>Seu progresso de leitura</strong> · <span id="progressText">0 de 0 capítulos</span></span>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-sub" id="progressSub"></div>
+    </div>
+
     <div class="search-wrap">
-      <input id="searchInput" type="search" placeholder="Buscar livro, referência ou palavra em toda a Bíblia..." autocomplete="off" aria-label="Buscar na Bíblia">
+      <input id="searchInput" type="search" placeholder="Buscar livro ou palavra na Bíblia…" autocomplete="off" aria-label="Buscar na Bíblia">
       <div class="search-icon">⌕</div>
     </div>
     <div class="search-mode" id="searchMode">
@@ -171,7 +260,7 @@ button{border:0}
       <button class="back" id="backBooks" type="button" aria-label="Voltar aos livros">‹</button>
       <div>
         <h1 class="title" id="chaptersTitle">Livro</h1>
-        <p class="subtitle">Selecione o capítulo.</p>
+        <p class="subtitle" id="chaptersSubtitle">Selecione o capítulo.</p>
       </div>
     </div>
     <div id="chapterGrid" class="chapter-grid"></div>
@@ -190,7 +279,15 @@ button{border:0}
 
       <div class="reader-actions">
         <button class="action primary" id="prevChapter" type="button">← Anterior</button>
+        <label class="read-toggle"><input type="checkbox" class="read-check" aria-label="Marcar capítulo como lido"><span class="box"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Lido</span></label>
         <button class="action" id="nextChapter" type="button">Próximo →</button>
+      </div>
+
+      <div class="reader-tools">
+        <span class="tool-label">Tamanho do texto</span>
+        <button class="size-btn" id="fontMinus" type="button" aria-label="Diminuir o tamanho da letra">−</button>
+        <span class="size-label" id="fontSizeLabel" aria-live="polite">18</span>
+        <button class="size-btn" id="fontPlus" type="button" aria-label="Aumentar o tamanho da letra">+</button>
       </div>
 
       <div id="verses" class="verses" style="margin-top:10px">
@@ -198,10 +295,11 @@ button{border:0}
       </div>
 
       <div class="chapter-nav">
-        <button class="action" id="prevChapterBottom" type="button">← Capítulo anterior</button>
-        <button class="action" id="nextChapterBottom" type="button">Próximo capítulo →</button>
+        <button class="action" id="prevChapterBottom" type="button">← Anterior</button>
+        <label class="read-toggle"><input type="checkbox" class="read-check" aria-label="Marcar capítulo como lido"><span class="box"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Lido</span></label>
+        <button class="action" id="nextChapterBottom" type="button">Próximo →</button>
       </div>
-      <div class="note">Troque a versão (ACF, AA ou NVI) no botão do topo. Cada versão é baixada uma única vez e depois funciona sem internet. Toque no número de um versículo para compará-lo nas três versões. Selecione um trecho de texto normalmente (com o dedo ou o mouse) — pode ser dentro de um versículo ou cruzando vários — e, quando aparecer a barra na parte de baixo da tela, toque em "Destacar" para marcá-lo. Para remover um destaque, toque diretamente sobre o trecho já marcado. Isso não interfere no menu de seleção do navegador (copiar, buscar, etc). Os destaques ficam neste dispositivo.</div>
+      <div class="note">Troque a versão (ACF, AA ou NVI) no botão do topo. Cada versão é baixada uma única vez e depois funciona sem internet. Toque no número de um versículo para compará-lo nas três versões. Selecione um trecho de texto normalmente (com o dedo ou o mouse) — pode ser dentro de um versículo ou cruzando vários — e, quando aparecer a barra na parte de baixo da tela, toque em "Destacar" para marcá-lo. Para remover um destaque, toque diretamente sobre o trecho já marcado. Isso não interfere no menu de seleção do navegador (copiar, buscar, etc). Os destaques, o progresso de leitura, o tema e o tamanho da letra ficam salvos só neste aparelho, e cada pessoa acompanha o próprio progresso.</div>
     </div>
   </section>
 </main>
@@ -211,6 +309,7 @@ button{border:0}
     <button id="closeMenu" type="button" style="float:right;width:auto;padding:7px 11px">×</button>
     <h3>Leitura</h3>
     <button id="clearHighlights" type="button">Limpar destaques deste capítulo</button>
+    <button id="resetProgress" type="button">Zerar meu progresso de leitura</button>
     <button id="clearCache" type="button">Remover versões baixadas deste dispositivo</button><button id="showSermon" type="button">Ver versículos salvos para sermão</button>
     <div class="cache-list" id="cacheInfo"></div>
   </aside>
@@ -268,6 +367,9 @@ const LEGACY_MARKS="biblia_almeida_marks_v2";    // destaques antigos (sem vers�
 const STORAGE_VERSION="biblia_versao_v1";
 const STORAGE_DOWNLOADED="biblia_versoes_baixadas_v1";
 const CACHE_NAME="biblia-versoes-v1";
+const STORAGE_READ="biblia_lidos_v1";      // capítulos lidos: { "Gn":[1,2,5], ... }
+const STORAGE_THEME="biblia_tema_v1";      // "light" | "dark"
+const STORAGE_FONT="biblia_fonte_v1";      // tamanho da letra em px
 
 const $=id=>document.getElementById(id);
 const bookSections=$("bookSections"), chapterGrid=$("chapterGrid"), verses=$("verses");
@@ -312,21 +414,69 @@ function getMarks(){return safeRead(STORAGE_MARKS,{});}
 function cacheKey(book,chapter){return currentVersion+"|"+book[1]+" "+chapter;}
 function legacyKey(book,chapter){return book[1]+" "+chapter;}
 
+/* ---------- Progresso de leitura (salvo só neste aparelho) ---------- */
+
+const OT_BOOKS=39; // os 39 primeiros livros da lista são o Antigo Testamento
+const TOTAL_CHAPTERS=BOOKS.reduce((s,b)=>s+b[2],0);
+const OT_CHAPTERS=BOOKS.slice(0,OT_BOOKS).reduce((s,b)=>s+b[2],0);
+const NT_CHAPTERS=TOTAL_CHAPTERS-OT_CHAPTERS;
+
+function getRead(){
+  const r=safeRead(STORAGE_READ,{});
+  return (r&&typeof r==="object"&&!Array.isArray(r))?r:{};
+}
+// Lista de capítulos lidos de um livro (ignora valores inválidos).
+function readChaptersOf(book,all=getRead()){
+  const list=Array.isArray(all[book[0]])?all[book[0]]:[];
+  return [...new Set(list.filter(n=>Number.isInteger(n)&&n>=1&&n<=book[2]))];
+}
+function isRead(book,chapter){return readChaptersOf(book).includes(chapter);}
+function setRead(book,chapter,flag){
+  const all=getRead(),set=new Set(readChaptersOf(book,all));
+  if(flag)set.add(chapter);else set.delete(chapter);
+  if(set.size)all[book[0]]=[...set].sort((a,b)=>a-b);else delete all[book[0]];
+  save(STORAGE_READ,all);
+}
+
+function renderProgress(){
+  const all=getRead();
+  let total=0,ot=0,nt=0;
+  BOOKS.forEach((b,i)=>{const c=readChaptersOf(b,all).length;total+=c;if(i<OT_BOOKS)ot+=c;else nt+=c;});
+  const pct=TOTAL_CHAPTERS?total/TOTAL_CHAPTERS*100:0;
+  const pctTxt=(total===0?"0":total===TOTAL_CHAPTERS?"100":pct<10?pct.toFixed(1).replace(".",","):String(Math.floor(pct)))+"%";
+  $("progressFill").style.width=pct+"%";
+  $("progressPct").textContent=pctTxt;
+  $("progressText").textContent=`${total.toLocaleString("pt-BR")} de ${TOTAL_CHAPTERS.toLocaleString("pt-BR")} capítulos`;
+  $("progressBar").setAttribute("aria-valuenow",String(Math.round(pct)));
+  $("progressSub").textContent=total===TOTAL_CHAPTERS
+    ?"Parabéns! Você leu a Bíblia inteira."
+    :`Antigo Testamento: ${ot} de ${OT_CHAPTERS} · Novo Testamento: ${nt} de ${NT_CHAPTERS}`;
+}
+
+function updateReadToggle(){
+  const r=selectedBook?isRead(selectedBook,selectedChapter):false;
+  document.querySelectorAll(".read-check").forEach(c=>{c.checked=r;});
+}
+
 function showView(id){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   $(id).classList.add("active");
+  if(id==="booksView"){renderBooks($("searchInput").value);renderProgress();}
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
 function renderBooks(filter=""){
   const term=filter.trim().toLocaleLowerCase("pt-BR");
+  const all=getRead();
   const grid=document.createElement("div");grid.className="book-grid";
   BOOKS.forEach((b,i)=>{
     const matches=!term || b[0].toLocaleLowerCase("pt-BR").includes(term) || b[1].toLocaleLowerCase("pt-BR").includes(term);
     if(!matches)return;
+    const done=readChaptersOf(b,all).length;
     const btn=document.createElement("button");
-    btn.type="button";btn.className="book";btn.dataset.section=b[3];
-    btn.innerHTML=`<span class="abbr">${b[0]}</span><span class="name">${b[1]}</span>`;
+    btn.type="button";btn.className="book"+(done===b[2]?" done":"");btn.dataset.section=b[3];
+    btn.setAttribute("aria-label",`${b[1]}, ${done} de ${b[2]} capítulos lidos`);
+    btn.innerHTML=`<span class="abbr">${b[0]}</span><span class="name">${b[1]}</span>`+(done?`<span class="book-bar"><i style="width:${done/b[2]*100}%"></i></span>`:"");
     btn.addEventListener("click",()=>openChapters(i));
     grid.appendChild(btn);
   });
@@ -336,8 +486,13 @@ function renderBooks(filter=""){
 }
 function openChapters(index){
   selectedBook=BOOKS[index];
+  const readSet=new Set(readChaptersOf(selectedBook));
   $("chaptersTitle").textContent=selectedBook[1];
-  chapterGrid.innerHTML=Array.from({length:selectedBook[2]},(_,i)=>`<button class="chapter" type="button" data-chapter="${i+1}">${i+1}</button>`).join("");
+  $("chaptersSubtitle").textContent=`Selecione o capítulo • ${readSet.size} de ${selectedBook[2]} lidos`;
+  chapterGrid.innerHTML=Array.from({length:selectedBook[2]},(_,i)=>{
+    const n=i+1,r=readSet.has(n);
+    return `<button class="chapter${r?" read":""}" type="button" data-chapter="${n}" aria-label="Capítulo ${n}${r?" (lido)":""}">${n}</button>`;
+  }).join("");
   chapterGrid.querySelectorAll(".chapter").forEach(btn=>btn.addEventListener("click",()=>openChapter(Number(btn.dataset.chapter))));
   showView("chaptersView");
 }
@@ -357,6 +512,7 @@ function updateNav(){
   $("prevChapterBottom").disabled=selectedChapter<=1;
   $("nextChapter").disabled=selectedChapter>=selectedBook[2];
   $("nextChapterBottom").disabled=selectedChapter>=selectedBook[2];
+  updateReadToggle();
 }
 
 /* ---------- Versões da Bíblia (arquivos JSON do projeto thiagobodruk/biblia) ---------- */
@@ -824,6 +980,64 @@ document.addEventListener("keydown",e=>{
   }
 });
 
+/* ---------- Capítulo lido ---------- */
+
+document.querySelectorAll(".read-check").forEach(box=>box.addEventListener("change",()=>{
+  if(!selectedBook)return;
+  setRead(selectedBook,selectedChapter,box.checked);
+  updateReadToggle();   // mantém a caixa de cima e a de baixo iguais
+}));
+$("resetProgress").addEventListener("click",()=>{
+  if(confirm("Zerar todo o seu progresso de leitura neste aparelho? Isso não pode ser desfeito.")){
+    save(STORAGE_READ,{});
+    updateReadToggle();
+    renderProgress();
+    $("readerMenu").classList.remove("show");
+  }
+});
+
+/* ---------- Tema claro/escuro ---------- */
+
+function currentTheme(){return document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light";}
+function applyTheme(theme,persist){
+  document.documentElement.setAttribute("data-theme",theme);
+  $("themeBtn").setAttribute("aria-label",theme==="dark"?"Mudar para o modo claro":"Mudar para o modo escuro");
+  if(persist)save(STORAGE_THEME,theme);
+}
+$("themeBtn").addEventListener("click",()=>applyTheme(currentTheme()==="dark"?"light":"dark",true));
+applyTheme(currentTheme(),false);
+// Enquanto a pessoa não escolher manualmente, acompanha o tema do aparelho.
+try{
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change",e=>{
+    const chosen=safeRead(STORAGE_THEME,null);
+    if(chosen!=="dark"&&chosen!=="light")applyTheme(e.matches?"dark":"light",false);
+  });
+}catch{}
+
+/* ---------- Tamanho da letra ---------- */
+
+const FONT_SIZES=[14,16,17,18,20,22,24,26,28,30];
+let fontSize=(()=>{
+  const saved=safeRead(STORAGE_FONT,null);
+  return FONT_SIZES.includes(saved)?saved:(window.innerWidth<=480?17:18);
+})();
+function applyFont(){
+  document.documentElement.style.setProperty("--verse-size",fontSize+"px");
+  const i=FONT_SIZES.indexOf(fontSize);
+  $("fontSizeLabel").textContent=fontSize;
+  $("fontMinus").disabled=i<=0;
+  $("fontPlus").disabled=i>=FONT_SIZES.length-1;
+}
+function stepFont(delta){
+  const i=FONT_SIZES.indexOf(fontSize);
+  fontSize=FONT_SIZES[Math.min(FONT_SIZES.length-1,Math.max(0,i+delta))];
+  save(STORAGE_FONT,fontSize);
+  applyFont();
+}
+$("fontMinus").addEventListener("click",()=>stepFont(-1));
+$("fontPlus").addEventListener("click",()=>stepFont(1));
+applyFont();
+
 /* ---------- Uso offline do site (service worker) ---------- */
 
 let swStatus="indisponível neste modo de abertura (precisa de https)";
@@ -840,6 +1054,7 @@ if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)){
 checkStorageAvailable();
 updateVersionButton();
 renderBooks();
+renderProgress();
 </script>
 
 <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
