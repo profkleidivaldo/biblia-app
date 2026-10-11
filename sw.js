@@ -3,7 +3,7 @@
    Os textos das versões (ACF/AA/NVI) são guardados pela página no Cache Storage
    (cache "biblia-versoes-v1"), que este arquivo não toca. */
 
-const SHELL = "biblia-shell-v1";
+const SHELL = "biblia-shell-v2";
 const ASSETS = [
   "./",
   "./index.html",
